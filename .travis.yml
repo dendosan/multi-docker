@@ -1,0 +1,23 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t dendosan/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true dendosan/react-test npm test
+
+after_success:
+  - docker build -t dendosan/multi-client ./client
+  - docker build -t dendosan/multi-nginx ./nginx
+  - docker build -t dendosan/multi-server ./server
+  - docker build -t dendosan/multi-worker ./worker
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push dendosan/multi-client
+  - docker push dendosan/multi-nginx
+  - docker push dendosan/multi-server
+  - docker push dendosan/multi-worker
+  
